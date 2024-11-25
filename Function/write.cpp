@@ -23,48 +23,57 @@ void write(unsigned int addr) {
 	statistics.data_write++;							// Increment the number of write for the data cache
 
 	way = matching_tag(tag, set, 'D');				// Look for a matching tag already in the data cache
-	if (way >= 0) {									// if we have a matching tag, then we have an data cache hit! (unless invalid MESI state)
-		switch (L1_data[way][set].MESI_char) {
-		case 'M':									// in we're in the modified state
-			statistics.data_hit++;					// Incremenet the data hit counter (We have a new hit!)
-			L1_data[way][set].MESI_char = 'M';		// stay in the modified state
-			L1_data[way][set].tag_bits = tag;
-			L1_data[way][set].set_bits = set;
-			L1_data[way][set].address = addr;
+	
+	if (way >= 0) {		
+		// cache write hit							// if we have a matching tag, then we have an data cache hit! (unless invalid MESI state)
+		statistics.data_hit++;					// Incremenet the data hit counter (We have a new hit!)
+		L1_data[way][set].State = 'M';		// stay in the modified state
+		L1_data[way][set].tag_bits = tag;
+		L1_data[way][set].set_bits = set;
+		L1_data[way][set].address = addr;
+		L1_LRU(way, set, empty_flag, 'D');
+		
+		// switch (L1_data[way][set].MESI_char) {
+		// case 'M':									// in we're in the modified state
+		// 	statistics.data_hit++;					// Incremenet the data hit counter (We have a new hit!)
+		// 	L1_data[way][set].MESI_char = 'M';		// stay in the modified state
+		// 	L1_data[way][set].tag_bits = tag;
+		// 	L1_data[way][set].set_bits = set;
+		// 	L1_data[way][set].address = addr;
 
-			L1_LRU(way, set, empty_flag, 'D');		// Update the data cache LRU count
-			break;
+		// 	L1_LRU(way, set, empty_flag, 'D');		// Update the data cache LRU count
+		// 	break;
 
-		case 'E':									// if we're writing in an exclusive state, the data will be modified
-			statistics.data_hit++;					// Incremenet the data hit counter (We have a new hit!)
-			L1_data[way][set].MESI_char = 'M';		// go to the modified state
-			L1_data[way][set].tag_bits = tag;
-			L1_data[way][set].set_bits = set;
-			L1_data[way][set].address = addr;
+		// case 'E':									// if we're writing in an exclusive state, the data will be modified
+		// 	statistics.data_hit++;					// Incremenet the data hit counter (We have a new hit!)
+		// 	L1_data[way][set].MESI_char = 'M';		// go to the modified state
+		// 	L1_data[way][set].tag_bits = tag;
+		// 	L1_data[way][set].set_bits = set;
+		// 	L1_data[way][set].address = addr;
 
-			L1_LRU(way, set, empty_flag, 'D');		// Update the data cache LRU count
-			break;
+		// 	L1_LRU(way, set, empty_flag, 'D');		// Update the data cache LRU count
+		// 	break;
 
-		case 'S':									// if we're writing in a shared state, the writen data will be exclusive
-			statistics.data_hit++;					// Incremenet the data hit counter (We have a new hit!)
-			L1_data[way][set].MESI_char = 'E';		// go to the exclusive state
-			L1_data[way][set].tag_bits = tag;
-			L1_data[way][set].set_bits = set;
-			L1_data[way][set].address = addr;
+		// case 'S':									// if we're writing in a shared state, the writen data will be exclusive
+		// 	statistics.data_hit++;					// Incremenet the data hit counter (We have a new hit!)
+		// 	L1_data[way][set].MESI_char = 'E';		// go to the exclusive state
+		// 	L1_data[way][set].tag_bits = tag;
+		// 	L1_data[way][set].set_bits = set;
+		// 	L1_data[way][set].address = addr;
 
-			L1_LRU(way, set, empty_flag, 'D');		// Update the data cache LRU count
-			break;
+		// 	L1_LRU(way, set, empty_flag, 'D');		// Update the data cache LRU count
+		// 	break;
 				
-		case 'I':									// if we are in the invalid state, we'll have a miss
-			statistics.data_miss++;					// Incremenet the data miss counter 
-			L1_data[way][set].MESI_char = 'E';		// go to the exclusive state
-			L1_data[way][set].tag_bits = tag;
-			L1_data[way][set].set_bits = set;
-			L1_data[way][set].address = addr;
+		// case 'I':									// if we are in the invalid state, we'll have a miss
+		// 	statistics.data_miss++;					// Incremenet the data miss counter 
+		// 	L1_data[way][set].MESI_char = 'E';		// go to the exclusive state
+		// 	L1_data[way][set].tag_bits = tag;
+		// 	L1_data[way][set].set_bits = set;
+		// 	L1_data[way][set].address = addr;
 
-			L1_LRU(way, set, empty_flag, 'D');		// Update the data cache LRU count
-			break;
-		}
+		// 	L1_LRU(way, set, empty_flag, 'D');		// Update the data cache LRU count
+		// 	break;
+		// }
 	}
 
 	else {												// Data Cache Miss
@@ -74,7 +83,7 @@ void write(unsigned int addr) {
 			cout << " [Data] Read for Ownership from L2 " << hex << addr << endl;
 		}
 
-		for (int i = 0; way < 0 && i < 8; ++i) {		// First, check if we have any empty lines
+		for (int i = 0; way < 0 && i < 4; ++i) {		// First, check if we have any empty lines
 			if (L1_data[i][set].tag_bits == EMPTY_TAG) {
 				way = i;								// return the way that has an empty line
 				empty_flag = 1;							// if we have an empty line, toggle the empty_flag to high
@@ -82,12 +91,12 @@ void write(unsigned int addr) {
 		}
 
 		if (way >= 0) {							// if we have an empty line, place the read data in it
-	     // L1_data[way][set].MESI_char = 'M';			// go to the modified state
+	     	L1_data[way][set].State = 'V';			// go to the Valid state
 			L1_data[way][set].tag_bits = tag;
 			L1_data[way][set].set_bits = set;
 			L1_data[way][set].address = addr;
 
-			L1_LRU(way, set, empty_flag, 'D');			// Update the data cache LRU order/count
+			L1_LRU(way, set, 'D');			// Update the data cache LRU order/count
 
 			if (mode == 1) {							// Simulating an iniial write through communication from L2
 				cout << "[Data Write Through] Write to L2: we have a data Cache Miss " << hex << addr << endl;
@@ -95,6 +104,7 @@ void write(unsigned int addr) {
 		}
 
 		else {											// if we don't have any empty lines, we need to evict the LRU line. 
+			
 			if (mode == 1) {							// Simulating an write back communication from L2
 				cout << "[Data Write back] Write to L2: we have a data Cache Miss " << hex << addr << endl;
 			}
@@ -110,12 +120,12 @@ void write(unsigned int addr) {
 			// if (way < 0) {								//If we don't have any invalid lines, 
 				way = find_LRU(set, 'D');				// Find the LRU way in the data cache
 				if (way >= 0) {							// if we have a way that's 0, (LRU in the data cache, we use it)
-					//L1_data[way][set].MESI_char = 'M';	// go to the modified state
+					L1_data[way][set].MESI_char = 'M';	// go to the modified state
 					L1_data[way][set].tag_bits = tag;
 					L1_data[way][set].set_bits = set;
 					L1_data[way][set].address = addr;
 
-					L1_LRU(way, set, empty_flag, 'D');	// update the L1 data cache LRU bits
+					L1_LRU(way, set,  'D');	// update the L1 data cache LRU bits
 				}
 			// }
 			// else { 										// if we have an invalid way, we evict it 
