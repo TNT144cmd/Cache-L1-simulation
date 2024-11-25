@@ -27,13 +27,12 @@ constexpr auto EMPTY_TAG = 4096;						//We are using the value 4096 to indicate 
 // We are using unsigned integers here, but we're 
 class cache {
 public:
-	char MESI_char = 'I';							// MESI bits initialized in the Invalid state. (Cái ni chắc không cần đâu ha)
+	char State = 'I';							// MESI bits initialized in the Invalid state. (Cái ni chắc không cần đâu ha)
 	/*I - Invalid, S - Shared, M - Modified, E - Exclusive */
 	unsigned int LRU_bits;							// LRU bits (3 bits for L1_data and 2 for L1_inst)
 	unsigned int address;							// Address bits
 	unsigned int set_bits;							// Set bits
-	unsigned int tag_bits;							// tag bits
-	bool		 valid_bit = 0; 						// 
+	unsigned int tag_bits;							// tag bits 						// 
 };
 
 // instantiate data and instruction caches from the cache class
@@ -70,7 +69,7 @@ unsigned int mode;
 // All functions used in the main .cpp file needs to be delcared here. 
 void clear_cache();
 int matching_tag(unsigned int tag, unsigned int set, char which_cache);
-void L1_LRU(unsigned int way, unsigned int set, bool empty_flag, char which_cache);
+void L1_LRU(unsigned int way, unsigned int set, char which_cache);
 int find_LRU(unsigned int set, char which_cache);
 void invalidate(unsigned int addr);
 void fetch_inst(unsigned int addr);
