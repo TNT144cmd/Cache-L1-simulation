@@ -29,7 +29,7 @@ void fetch_inst(unsigned int addr) {
 		L1_data[way][set].tag_bits = tag;
 		L1_data[way][set].set_bits = set;
 		L1_data[way][set].address = addr;
-		L1_LRU(way, set, empty_flag, 'I');  	// update LRU cout
+		L1_LRU(way, set, 'I');  	// update LRU cout
 
 		// switch (L1_data[way][set].MESI_char) {
 		// case 'M':									// in we're in the modified state
@@ -86,19 +86,19 @@ void fetch_inst(unsigned int addr) {
 		for (int i = 0; (way < 0 && i < 8); ++i) {		// First, check if we have any empty lines
 			if (L1_data[i][set].tag_bits == EMPTY_TAG) {	
 				way = i;								// return the way that has an empty line
-				empty_flag = 1;							// if we have an empty line, toggle the empty_flag to high
+				// empty_flag = 1;							// if we have an empty line, toggle the empty_flag to high
 			}
 		}
 
         // Have empty way
 		if (way >= 0) {									// if we have an empty line, place the read data in it
 			
-         // L1_data[way][set].MESI_char = 'E';			// and mark it exclusive, it's the only line with this data
+         	L1_data[way][set].MESI_char = 'V';			// and mark it exclusive, it's the only line with this data
 			L1_data[way][set].tag_bits = tag;
 			L1_data[way][set].set_bits = set;
 			L1_data[way][set].address = addr;
 
-			L1_LRU(way, set, empty_flag, 'I');			// Update the data cache LRU order/count
+			L1_LRU(way, set,  'I');			// Update the data cache LRU order/count
 
 			if (mode == 1) {							// Simulating a cache read communication with L2
 				cout << " [Instruction] Read from L2: L1 cache miss, obtain data from L2 " << hex << addr << '\n' << endl;
@@ -123,11 +123,11 @@ void fetch_inst(unsigned int addr) {
 			//if (way < 0) {					//If we don't have any invalid lines, 
 			way = find_LRU(set, 'D');				// Find the LRU way in the data cache
 			if (way >= 0) {							// if we have a way that's 0, (LRU in the data cache, we use it)
-			//	L1_data[way][set].MESI_char = 'E';	// the data here will be new, and exclusive to this cache
+				L1_data[way][set].MESI_char = 'V';	// the data here will be new, and exclusive to this cache
 				L1_data[way][set].tag_bits = tag;
 				L1_data[way][set].set_bits = set;
 				L1_data[way][set].address = addr;
-				L1_LRU(way, set, empty_flag, 'I');	// update the L1 data cache LRU bits
+				L1_LRU(way, set, 'I');	// update the L1 data cache LRU bits
 			}
 //		}
 
